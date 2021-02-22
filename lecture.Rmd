@@ -1,0 +1,264 @@
+---
+title: "Your first database"
+output: 
+  html_notebook:
+    toc: true
+    toc_float:
+      toc_collapsed: true
+    toc_depth: 3
+    number_sections: true
+    theme: cerule
+---
+
+
+# A few words from our sponsor
+
+- Just in case you missed the announcement. There is no lab this week.
+- I will send out example answers/code for the exam next week to everyone.
+    - That said, remember, there can be more than one way to solve some problems.
+- Tonight we will not introduce any major new ideas.
+    - More discussion of inner join / left join.
+    - Why you should use left join unless you have a good reason not to.
+    - Next week's lab will work with this same data set, so pay attention tonight.
+- Who knows, this might even be useful for the quiz.
+
+
+
+# Setup
+
+```{r}
+library(DBI)
+library(dbplyr)
+library(knitr)
+library(RSQLite)
+library(tidyverse)
+con <- dbConnect(RSQLite::SQLite(), dbname = "./data/Chinook_Sqlite.sqlite")
+chinook_tables <- dbListTables(con)
+Album <- con %>% tbl("Album")
+Artist <- con %>% tbl("Artist")
+Customer <- con %>% tbl("Customer")
+Employee <- con %>% tbl("Employee")
+Genre <- con %>% tbl("Genre")
+Invoice <- con %>% tbl("Invoice")
+InvoiceLine <- con %>% tbl("InvoiceLine")
+MediaType <- con %>% tbl("MediaType")
+Playlist <-  con %>% tbl("Playlist")
+PlaylistTrack <-  con %>% tbl("PlaylistTrack")
+Track <-  con %>% tbl("Track")
+## There are other tables, but this is enough for the moment.
+```
+
+## About the data
+
+Chinook is a sample database which can be used for teaching relational logic, tool demos, etc. It is an alternative to the (infamous) Northwind database. The database contains the sales records of fictional digital media store. Tables include:
+
+```{r}
+writeLines(paste("- ", chinook_tables))
+```
+
+## About that name
+
+Chinooks are winds in the interior West of North America, where the Canadian Prairies and Great Plains meet various mountain ranges. Chinooks are most prevalent over southern Alberta in Canada. Chinook is a good name choice for a database that intents to be an alternative to Microsoft's overused Northwind.
+
+## A database???
+
+- Previously, data sets were loaded into R. We used the Global Environment pane to:
+    - look at the data
+    - review column names
+- Today's data is not loaded into R. It is kept in the database and it does most of the work.
+    - This does complicate some commands.
+    - It is useful when the data changes regularly.
+    - It is useful when the data is too large or complex to hold in R directly.
+    - Let's companies buy a big database to crunch the data remotely for a set of analysts.
+- We are simulating ↑↑↑ by keeping our data in a SQLite database.
+
+When you first look at data in a database, your first goal is to understand the grain of each table. Your second (but equally important goal) is to understand how the tables fit together.
+
+```{r}
+Album %>% glimpse()
+Album
+```
+
+- Primary Key: AlbumId (DOES NOT repeat in this table)
+    - Often called FooId or FooID.
+    - Test for it! `r Album %>% group_by(AlbumId) %>% count() %>% filter(n > 1) `
+        - No returns - that's good!
+- Foreign Key: ArtistId (Can repeat, used to link to another table.)
+    - These will often ALSO have ID or Id in the name. 😱
+    - However, these may repeat and will generally be a different grain.
+    - Test for it! `r Album %>% group_by(ArtistId) %>% count() %>% filter(n > 1) `
+        - We got quite a few returns.
+        - That would be a problem for a Primary Key, but not a Foreign Key.
+- Apologies, the Title column doesn't get a fancy name.
+
+Let's look at another table.
+
+```{r}
+Artist
+```
+
+- Primary Key: ArtistId
+- Test for it!
+- `r Artist %>% group_by(ArtistId) %>% count() %>% filter(n > 1) `
+- Do you understand why I only want rows back where n > 1?
+    - Seriously, this is important.
+
+We can use `ArtistId` (capitalization matters) to connect Album and Artist!
+
+## ERD
+
+- So, sure, you _can_ go through each and every table looking for these.
+    - In practice, that _is_ what you have to do.
+    - But there _is_ a better way!
+- Entity Relationship Diagram (ERD)
+    - These map out the relationships between our tables.
+    - And, ummmm, you get these once in a blue moon, but they are nice nonetheless.
+    - And even if you don't get one, there are tools to help you build these, if the data is well structured.
+    - Hello, SchemaSpy! (This is nearly a SchemaSpy ad now, I know. Sorry)
+- Let's look at Album and Artist on this ERD.
+
+```{r}
+include_graphics('includes/chinook-erd-large.png')
+include_graphics('includes/chinook-erd.png')
+```
+
+
+
+# Tasks
+
+
+## Task 01
+
+Find all of the albums by the band Audioslave.
+
+- The band name is in the Artist table. But only once.
+     - `r Artist %>% filter(Name == "Audioslave") `
+- The band's id number is in the Album table N number of times.
+    - `r Album %>% filter(ArtistId == 8) `
+- OK, cute. We've shown we can do this "manually". Now, can we make it clean?
+
+```{r}
+## Yes, we, can!
+Artist %>% 
+  filter(Name == "Audioslave") %>% 
+  inner_join(Album, by = "ArtistId")
+```
+
+And we can count them!
+
+```{r}
+Artist %>% 
+  filter(Name == "Audioslave") %>% 
+  inner_join(Album, by = "ArtistId") %>%
+  summarize(n_albums = n())
+```
+
+- The rest of the class is going to be 100% interactive.
+- There are no new concepts tonight. None. Nada.
+- This is all about consolidating what we've already learned.
+
+
+## Task 02
+
+What is the difference in grain between Invoice and InvoiceLine?
+
+```{r}
+
+```
+
+
+## Task 03
+
+What is the Total value of the highest value Invoice?
+
+- This is a single table question.
+- This should be easy.
+
+```{r}
+
+```
+
+
+## Task 04
+
+Which country bought the most tracks?
+
+- Join Invoice to InvoiceLine.
+- Group by BillingCountry.
+- Count rows so we know how many tracks were purchased.
+
+```{r}
+
+```
+
+Going one step further, can you calculate the percentage of tracks sold by Country?
+
+- This involves a mutate.
+
+```{r}
+
+```
+
+
+## Task 05
+
+What is the name of customer with the most Invoices?
+
+- Before you join Invoice to Customer, get your grain right.
+- This is asking you to change the grain of Invoice. Do that first.
+- And only THEN should you join to Customer.
+- Some good advice for an analyst, default to using the left join.
+    - Only use an inner join if you have a reason to.
+
+```{r}
+
+```
+
+
+## Task 06
+
+Tell me the names of the Chinook's five most valuable customers.
+
+- Yes, I am assuming the total value of invoices equals directly to total value as a customer.
+- I apparently care nothing for interpersonal relationships.
+
+```{r}
+
+```
+
+
+## Task 07 
+
+What are the least favorite genres of songs in the catalog?
+
+- See Genre and Track.
+
+```{r}
+
+```
+
+
+## Task 08
+
+Show how many tracks are in each playlist.
+
+- Join Playlists to PlaylistsTracks
+    - What columns should you use?
+    - Use an inner join for this.
+- Join Tracks to the results.
+- Group By Playlist.
+- Win
+- Yes, this one is tough.
+
+```{r}
+
+```
+
+
+## Task 09
+
+What songs did Steve Murray buy?
+
+```{r}
+
+```
