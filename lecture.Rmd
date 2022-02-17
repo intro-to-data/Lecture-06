@@ -1,5 +1,5 @@
 ---
-title: "Your first database"
+title: "About Last Week's Lab . . . "
 output: 
   html_notebook:
     toc: true
@@ -11,254 +11,217 @@ output:
 ---
 
 
-# A few words from our sponsor
-
-- Just in case you missed the announcement. There is no lab this week.
-- I will send out example answers/code for the exam next week to everyone.
-    - That said, remember, there can be more than one way to solve some problems.
-- Tonight we will not introduce any major new ideas.
-    - More discussion of inner join / left join.
-    - Why you should use left join unless you have a good reason not to.
-    - Next week's lab will work with this same data set, so pay attention tonight.
-- Who knows, this might even be useful for the quiz.
-
-
-
 # Setup
 
-```{r}
-library(DBI)
-library(dbplyr)
-library(knitr)
-library(RSQLite)
+```{r setup, include=FALSE}
+options(scipen = 999)
 library(tidyverse)
-con <- dbConnect(RSQLite::SQLite(), dbname = "./data/Chinook_Sqlite.sqlite")
-chinook_tables <- dbListTables(con)
-Album <- con %>% tbl("Album")
-Artist <- con %>% tbl("Artist")
-Customer <- con %>% tbl("Customer")
-Employee <- con %>% tbl("Employee")
-Genre <- con %>% tbl("Genre")
-Invoice <- con %>% tbl("Invoice")
-InvoiceLine <- con %>% tbl("InvoiceLine")
-MediaType <- con %>% tbl("MediaType")
-Playlist <-  con %>% tbl("Playlist")
-PlaylistTrack <-  con %>% tbl("PlaylistTrack")
-Track <-  con %>% tbl("Track")
-## There are other tables, but this is enough for the moment.
+diamonds <- read_csv("data/diamonds.csv")
 ```
 
-## About the data
-
-Chinook is a sample database which can be used for teaching relational logic, tool demos, etc. It is an alternative to the (infamous) Northwind database. The database contains the sales records of fictional digital media store. Tables include:
+# Data
 
 ```{r}
-writeLines(paste("- ", chinook_tables))
+diamonds
 ```
 
-## About that name
+## Columns
 
-Chinooks are winds in the interior West of North America, where the Canadian Prairies and Great Plains meet various mountain ranges. Chinooks are most prevalent over southern Alberta in Canada. Chinook is a good name choice for a database that intents to be an alternative to Microsoft's overused Northwind.
+A data frame with 53940 rows and 10 variables:
 
-## A database???
+- carat: weight of the diamond (0.2–5.01)
+- cut: quality of the cut (Fair, Good, Very Good, Premium, Ideal)
+- color: diamond colour, from D (best) to J (worst)
+- clarity: a measurement of how clear the diamond is (I1 (worst), SI2, SI1, VS2, VS1, VVS2, VVS1, IF (best))
+- depth: total depth percentage = z / mean(x, y) = 2 * z / (x + y) (43–79)
+- table: width of top of diamond relative to widest point (43–95)
+- price: price in US dollars (\$326–\$18,823)
+- x: length in mm (0–10.74)
+- y: width in mm (0–58.9)
+- z: depth in mm (0–31.8)
 
-- Previously, data sets were loaded into R. We used the Global Environment pane to:
-    - look at the data
-    - review column names
-- Today's data is not loaded into R. It is kept in the database and it does most of the work.
-    - This does complicate some commands.
-    - It is useful when the data changes regularly.
-    - It is useful when the data is too large or complex to hold in R directly.
-    - Let's companies buy a big database to crunch the data remotely for a set of analysts.
-- We are simulating ↑↑↑ by keeping our data in a SQLite database.
 
-When you first look at data in a database, your first goal is to understand the grain of each table. Your second (but equally important goal) is to understand how the tables fit together.
+# Revisiting Model 1
+
+- Below is our first model from last week.
+- Let's discuss what each part of this means.
 
 ```{r}
-Album %>% glimpse()
-Album
+# This is fancy-speak for price as a function of carat.
+model_1 <- lm(price ~ carat, data = diamonds)
+## Note: This is NOT summarize!
+summary(model_1)
 ```
 
-- Primary Key: AlbumId (DOES NOT repeat in this table)
-    - Often called FooId or FooID.
-    - Test for it! `r Album %>% group_by(AlbumId) %>% count() %>% filter(n > 1) `
-        - No returns - that's good!
-- Foreign Key: ArtistId (Can repeat, used to link to another table.)
-    - These will often ALSO have ID or Id in the name. 😱
-    - However, these may repeat and will generally be a different grain.
-    - Test for it! `r Album %>% group_by(ArtistId) %>% count() %>% filter(n > 1) `
-        - We got quite a few returns.
-        - That would be a problem for a Primary Key, but not a Foreign Key.
-- Apologies, the Title column doesn't get a fancy name.
-
-Let's look at another table.
+One thing we didn't do is graph our model. And, well, we should have.
 
 ```{r}
-Artist
+ggplot(diamonds, aes(x = carat, y = price)) +
+    geom_point() +
+    geom_smooth(method = "lm")
 ```
 
-- Primary Key: ArtistId
-- Test for it!
-- `r Artist %>% group_by(ArtistId) %>% count() %>% filter(n > 1) `
-- Do you understand why I only want rows back where n > 1?
-    - Seriously, this is important.
+- Here you can easily see how the coefficient for carat (7756.43) makes sense.
+- And you can see where/how our Intercept dips below 0.
+- And this was our challenge last week.
 
-We can use `ArtistId` (capitalization matters) to connect Album and Artist!
-
-## ERD
-
-- So, sure, you _can_ go through each and every table looking for these.
-    - In practice, that _is_ what you have to do.
-    - But there _is_ a better way!
-- Entity Relationship Diagram (ERD)
-    - These map out the relationships between our tables.
-    - And, ummmm, you get these once in a blue moon, but they are nice nonetheless.
-    - And even if you don't get one, there are tools to help you build these, if the data is well structured.
-    - Hello, SchemaSpy! (This is nearly a SchemaSpy ad now, I know. Sorry)
-- Let's look at Album and Artist on this ERD.
+And, last week, we assigned the predicted and residual values to our original data. So, let's do that again:
 
 ```{r}
-include_graphics('includes/chinook-erd-large.png')
-include_graphics('includes/chinook-erd.png')
+diamonds <-
+    diamonds %>%
+    mutate(
+        predicted_1 = model_1$fitted.values,
+        residuals_1 = model_1$residuals,
+        too_low = if_else(predicted_1 < 0, TRUE, FALSE)
+    )
+diamonds
 ```
 
-
-
-# Tasks
-
-
-## Task 01
-
-Find all of the albums by the band Audioslave.
-
-- The band name is in the Artist table. But only once.
-     - `r Artist %>% filter(Name == "Audioslave") `
-- The band's id number is in the Album table N number of times.
-    - `r Album %>% filter(ArtistId == 8) `
-- OK, cute. We've shown we can do this "manually". Now, can we make it clean?
+So, where are our "too low" predictions?
 
 ```{r}
-## Yes, we, can!
-Artist %>% 
-  filter(Name == "Audioslave") %>% 
-  inner_join(Album, by = "ArtistId")
+ggplot(diamonds, aes(x = carat, y = price, color = too_low)) +
+    geom_point(alpha = .1) +
+    geom_smooth(method = "lm", color = "blue") +
+    scale_color_brewer(palette = "Dark2")
 ```
 
-And we can count them!
+- Our model is most obviously wrong for the cheapest diamonds.
+- If our goal is to predict the price of a diamond, this could be a problem.
+    - Cuz how many people do you know buying 20k ice?
+
+# Lab Challenge
+
+I challenged you to make increase the r-squared value and reduce the number of below 0 prediction. This was, perhaps, not entirely fair.
+
+- Perhaps we can find a pattern.
+- Look at our plot above.
+    - Do you see any patterns?
+
+What if we did a regression for all diamonds under 1 carat?
 
 ```{r}
-Artist %>% 
-  filter(Name == "Audioslave") %>% 
-  inner_join(Album, by = "ArtistId") %>%
-  summarize(n_albums = n())
+ggplot(diamonds %>% filter(carat < 1), aes(x = carat, y = price, color = too_low)) +
+    geom_point(alpha = .1) +
+    geom_smooth(method = "lm", color = "blue") +
+    scale_color_brewer(palette = "Dark2")
+model_small <- lm(price ~ carat, diamonds %>% filter(carat < 1))
+summary(model_small)
 ```
 
-- The rest of the class is going to be 100% interactive.
-- There are no new concepts tonight. None. Nada.
-- This is all about consolidating what we've already learned.
+- This is better.
+- Our intercept went from -2256 to -995.
+- But, ever here, we see a strong pattern.
 
+```{r}
+ggplot(diamonds %>% filter(carat >= 1), aes(x = carat, y = price, color = too_low)) +
+    geom_point(alpha = .1) +
+    geom_smooth(method = "lm", color = "blue") +
+    scale_color_brewer(palette = "Dark2")
+model_big <- lm(price ~ carat, diamonds %>% filter(carat >= 1))
+summary(model_big)
+```
 
-## Task 02
+Perhaps we can create a new variable to help the model see this banding.
 
-What is the difference in grain between Invoice and InvoiceLine?
+- And remember, this is done by eye-ball.
 
 ```{r}
 
+diamonds <-
+    diamonds %>%
+    mutate(carat_group = case_when(
+        carat < 0.3 ~ "< 0.3",
+        carat >= 0.3 & carat < 0.5 ~ "0.3 - 0.4",
+        carat >= 0.5 & carat < 0.7 ~ "0.5 - 0.7",
+        carat >= 0.7 & carat < 0.9 ~ "0.7 - 0.8",
+        carat >= 0.9 & carat < 1.0 ~ "0.9 - 0.99",
+        carat >= 1.0 & carat < 1.5 ~ "1.0 - 1.4",
+        carat >= 1.5 & carat < 2.0 ~ "1.5 - 1.99",
+        carat >= 2.0 & carat < 3.0 ~ "2.0 - 2.99",
+        carat >= 3.0 ~ "> 3"
+    ))
+ggplot(diamonds, aes(x = carat, y = price, color = too_low)) +
+    geom_point(alpha = .1) +
+    geom_smooth(method = "lm", color = "blue") +
+    scale_color_brewer(palette = "Dark2") +
+    facet_wrap(~carat_group)
+model_complicated <- lm(price ~ carat + carat_group, diamonds)
+summary(model_complicated)
 ```
 
-
-## Task 03
-
-What is the Total value of the highest value Invoice?
-
-- This is a single table question.
-- This should be easy.
+So, how did we do?
 
 ```{r}
-
+diamonds <-
+    diamonds %>%
+    mutate(
+        predicted_complicated = model_complicated$fitted.values,
+        residuals_complicated = model_complicated$residuals,
+        too_low = if_else(predicted_complicated < 0, TRUE, FALSE)
+    )
+diamonds %>% filter(too_low)
 ```
 
-
-## Task 04
-
-Which country bought the most tracks?
-
-- Join Invoice to InvoiceLine.
-- Group by BillingCountry.
-- Count rows so we know how many tracks were purchased.
+- This is what #winning looks like.
 
 ```{r}
+ggplot(diamonds, aes(x = predicted_1)) +
+    geom_density() +
+    labs(title = "Model 1: Distribution of Predicted Values")
 
+ggplot(diamonds, aes(x = predicted_complicated)) +
+    geom_density() +
+    labs(title = "Model Complicated: Distribution of Predicted Values")
 ```
 
-Going one step further, can you calculate the percentage of tracks sold by Country?
-
-- This involves a mutate.
+PLEASE notice the difference!
 
 ```{r}
+diamonds %>%
+    summarize(
+        model_1_mean_residuals = mean(residuals_1),
+        model_1_sd_residuals = sd(residuals_1),
+        model_c_mean_residuals = mean(residuals_complicated),
+        model_c_sd_residuals = sd(residuals_complicated),
+    )
+ggplot(diamonds, aes(x = residuals_1)) +
+    geom_density() +
+    labs(title = "Model 1: Distribution of Predicted Values")
 
+ggplot(diamonds, aes(x = residuals_complicated)) +
+    geom_density() +
+    labs(title = "Model Complicated: Distribution of Predicted Values")
 ```
 
-
-## Task 05
-
-What is the name of customer with the most Invoices?
-
-- Before you join Invoice to Customer, get your grain right.
-- This is asking you to change the grain of Invoice. Do that first.
-- And only THEN should you join to Customer.
-- Some good advice for an analyst, default to using the left join.
-    - Only use an inner join if you have a reason to.
+As you can see, our residuals are closer to zero, but more importantly, the standard deciation is down by over $100.
 
 ```{r}
-
+ggplot(diamonds, aes(x = price, y = predicted_1)) +
+    geom_point() +
+    labs(title = "Model 1: Price Compared to Predicted Price")
+ggplot(diamonds, aes(x = price, y = predicted_complicated)) +
+    geom_point() +
+    labs(title = "Model Complicated: Price Compared to Predicted Price")
 ```
 
-
-## Task 06
-
-Tell me the names of the Chinook's five most valuable customers.
-
-- Yes, I am assuming the total value of invoices equals directly to total value as a customer.
-- I apparently care nothing for interpersonal relationships.
+- This (hopefully) teaches us something important about modeling data.
+    - model_1 has an adjusted r-squared of ~.85. 
+    - model_complicated is only .87.
+    - So, yes, better, but not wildly so.
+    - Yet, model_complicated is a better, more practical model.
+        - It isn't actually all that complicated.
+        - It produces no results which are OBVIOUSLY stupid.
+            - (At this level of obvious.)
+    - We also have a saner looking estimate for the slope for carat.
 
 ```{r}
-
+model_more_complicated <- lm(price ~ carat * carat_group, diamonds)
+summary(model_complicated)
+summary(model_more_complicated)
 ```
 
-
-## Task 07 
-
-What are the least favorite genres of songs in the catalog?
-
-- See Genre and Track.
-
-```{r}
-
-```
-
-
-## Task 08
-
-Show how many tracks are in each playlist.
-
-- Join Playlists to PlaylistsTracks
-    - What columns should you use?
-    - Use an inner join for this.
-- Join Tracks to the results.
-- Group By Playlist.
-- Win
-- Yes, this one is tough.
-
-```{r}
-
-```
-
-
-## Task 09
-
-What songs did Steve Murray buy?
-
-```{r}
-
-```
+- There are plenty of advanced techniques to understand a model.
+- And those are important but . . . 
+- When common sense is excluded from model assessment, stupid things happen.
