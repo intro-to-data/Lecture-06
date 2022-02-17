@@ -1,0 +1,106 @@
+---
+title: "Beyond The Numbers"
+subtitle: "Precision v Accuracy"
+author: "Andy Choens"
+output:
+    ioslides_presentation:
+        widescreen: TRUE
+        smaller: TRUE
+---
+
+
+
+##
+
+### “Far better an approximate answer to the right question, which is often vague, than an exact answer to the wrong question, which can always be made precise.”
+### — John Tukey
+
+## A Priori Assumptions
+
+- Measurement in modern medicine is more accurate and more precise than at any other time in human history.
+- "Big data" and advanced modeling technologies are also more sensitive.
+
+
+## BMI Background
+
+| WEIGHT         | STATUS          |
+|:---------------|:----------------|
+| Below 18.5     | Underweight     |
+| 18.5 - 24.9    | Healthy Weight  |
+| 25.0 - 29.9    | Overweight      |
+| 30.0 and Above | Obesity         |
+Adult BMI Ranges Shown
+
+- Calculation
+    - Body weight (kilograms)
+    - Body height (meters)
+    - $BMI = kg/m^2$
+- **Fun Fact:** Body weight and bodyweight are not the same thing.
+
+**Source:** https://www.cdc.gov/healthyweight/assessing/bmi/
+
+## Sources of Error (BMI)
+
+- Body Height
+    - Shoes
+    - Phone
+    - Watch
+    - Clothing
+    - Accuracy of scale
+- Body Height
+    - Shoes (This is likely a minimal impact.)
+
+## Does This Matter? (BMI)
+
+- I am 1.8 meters tall.
+- Calculate my BMI at 79, 81, and 83 kg.
+    - $BMI = kg/m^2$
+    - Healthy BMI is between 18.5 and 24.9.
+    - Overweight BMI is between 25.0 and 29.9.
+- But I'm not sure much harm is done here.
+
+## Blood Pressure (BP)
+
+| CLASSIFICATION       | SYSTOLIC      | DIASTOLIC     |
+|:---------------------|:--------------|:--------------|
+| Normal               | 119 or lower  | 79 or lower   |
+| Prehypertension      | 120 to 139    | 80 to 89      |
+| Stage 1 hypertension | 140 to 159    | 90 to 99      |
+| Stage 2 hypertension | 160 or higher | 100 or higher |
+Blood Pressure is measured in MM HG.
+
+## Sources of Error (BP)
+
+- Patient should be seated comfortably, with back supported, legs uncrossed, and upper arm bared.
+    - Diastolic pressure is higher in the seated position, whereas systolic pressure is higher in the supine position.
+    - An unsupported back may increase diastolic pressure.
+    - Crossing the legs may increase systolic pressure.
+- Patient's arm should be supported at heart level.
+    - If the upper arm is below the level of the right atrium, the readings will be too high.
+    - If the upper arm is above heart level, the readings will be too low.
+    - If the arm is unsupported and held up by the patient, pressure will be higher.
+- Neither the patient nor the person taking the measurement should talk during the procedure.
+
+**Source:** https://www.aafp.org/afp/2005/1001/p1391.html
+
+## Does This Matter? (BP)
+
+- The net result for any particular measurement is hard to predict.
+    - Because we often get more than one of these wrong.
+- A delayed diagnosis of hypertension can cause real harm.
+- However, treating non-existent hypertension can also cause real harm.
+
+## The Moral Of This Slide Deck
+
+- Different sources of data have different sources of error:
+    - Engineering/Lab: Generally more precise and errors tend to be randomly distributed. Examples: Measuring temperature or mass of a sample.
+    - Discipline: Each scientific discipline has a different expectation of accuracy/precision. Don't use assumptions from chemistry to assess a psychology experiment.
+    - Admin data: Oh boy. This is a huge source of data. And much of it is . . . questionable.
+        - If the person collecting the data isn't using/accountable for the data, then it will have problems.
+- Accuracy is not the same as precision:
+    - Earlier, I told you I am 1.8 meters tall.
+    - Saying I am 1.81 meters tall is both more accurate and more precise.
+    - Saying I am 1.61 meters is more precise, but less accurate.
+    - Yet, we often interpret a higher precision as higher accuracy.
+- In Public Health: Data is biased, incomplete, and comes with built-in errors.
+    - Until proven otherwise, assume errors bias your data.
