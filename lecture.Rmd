@@ -95,7 +95,7 @@ Coefficients:
   - In this case, cost increases $257.70 for every year the member ages.
 - Adjusted R-squared: How much of the variance in our data is explained by the model? Will have a value between 0 and 1, higher is better.
   - This isn't particularly good.
-- p-value: Is the model statisticall significant. <= .05
+- p-value: Is the model statistically significant. <= .05
   - We will discuss this concept more, but this will do for right now.
 - This object, `age_model`, has a series of things we need to discuss:
 
@@ -172,7 +172,7 @@ ggplot(insurance, aes(residuals)) +
 
 ```{r}
 # Removes the predicted/residual values from our last model.
-insurnace <- insurance |> select(-pred, -residuals)
+insurance <- insurance |> select(-pred, -residuals)
 
 ggplot(insurance, aes(x = age, y = charges, color = smoker)) +
     geom_point() +
