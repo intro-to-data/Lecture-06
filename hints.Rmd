@@ -11,6 +11,7 @@ Think of plotting as painting with oil paints. Each function is an additional la
   - `geom_histogram()`: For a histogram
   - `geom_bar()`: For a bar plot
     - For a percent plot: `aes(y = 100 * (..count..) / sum(..count..)`
+  - `geom_smooth(method = "lm")` Draws a linear regression model on your plot.
 
 Optional Functions (layers)
 
@@ -48,3 +49,14 @@ Optional Functions (layers)
     - Function: `arrange()`
     - By default, returns are sorted in ascending order.
     - `desc()` Returns can be sorted in descending order.
+
+
+
+# Modeling
+
+These functions tend to be Base R functions, are hard to use with the pipe (|>) and may contain periods rather than underscores in their name.
+
+## Linear Regression
+
+- `lm()`: Returns a linear model object
+- `cor.test()`: Tests for correlation between two columns of data.
