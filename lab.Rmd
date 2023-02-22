@@ -1,5 +1,5 @@
 ---
-title: "The Penguins Strike Back"
+title: "Episode V: The Emperor (Penguin) Strikes Back"
 output: 
   html_notebook:
     toc: true
@@ -14,12 +14,13 @@ output:
 
 # Setup
 
-Because our lab uses a different data source than our lecture, I recommend clearing your global environment before running this setup chunk.
-
 ```{r setup, include=FALSE}
 options(scipen = 999)
+library(modelr)
+library(rio)
 library(tidyverse)
-penguins <- read_csv("data/penguins.csv")
+
+penguins <- import("data/penguins.csv")
 ```
 
 ## Data
@@ -49,7 +50,6 @@ Helpful Hint: Don't accept NA as an answer. Use `?mean` if you don't remember to
 
 ```{r}
 ## YOUR CODE HERE!
-
 ```
 
 # Task 02
@@ -59,7 +59,6 @@ Answer:
 
 ```{r}
 ## YOUR CODE HERE!
-
 ```
 
 # Task 03
@@ -72,7 +71,6 @@ Helpful Hint:
 
 ```{r}
 ## YOUR CODE HERE!
-
 ```
 
 # Task 04
@@ -82,7 +80,6 @@ Answer:
 
 ```{r}
 ## YOUR CODE HERE!
-
 ```
 
 # Task 05
@@ -98,7 +95,6 @@ Helpful Hint:
 
 ```{r}
 ## YOUR CODE HERE!
-
 ```
 
 
@@ -113,7 +109,6 @@ Helpful Hint:
 
 ```{r}
 ## YOUR CODE HERE!
-
 ```
 
 # Task 07
@@ -122,120 +117,35 @@ Question: Build a linear regression where flipper length (y) is explained as a f
 Answer: 
 
 Helpful Hint: 
-- In Canvas, round your answer to the hundredths. Thus, 1.0574 becomes 1.06.
 - This is the formal regression of the plot from Task 04. So if your numbers are obviously wildly different, you did something wrong!!!!
 
 ```{r}
 ## YOUR CODE HERE!
-
 ```
 
 
 # Task 08
 
-Question: Using dplyr verbs, calculate the body mass of male penguins and female penguins. Which is larger? Calculate the standard deviation of body mass for each. Do you suspect the observed differences are statistically significant? Feel free to look at a plot of the body mass as well.
-Answer: 
+> All models are wrong but some are useful.
+> -- Aphorism of George Box
 
-```{r}
-## YOUR CODE HERE!
+Based on your plot from Task 04 and what you can see in the `summary()` of your 
+model, is model useful or does it contain tigers? Is it flawed like the first model from the lecture which explained less than 10 percent of the variance of charges?
 
-```
+
 
 # Task 09
 
-Question: Let's perform a t-test on our data. Please compare the averages here to what you calculated in Task 07. Was the p value less than .05?
-Answer: 
+You can use the `cor.test()` function to calculate the correlation between two columns of data. Correlation describes the "degree of relationship" between two variables in a single summary statistic.
 
+Correlation values ranges from -1 to +1. Positive values of correlation, such as in our finely feathered example, indicate that as one variable increase the other variable increases as well. Negative values of correlation indicate that as one variable increases the other variable decreases.
+For a nice synopsis of correlation, see https://statistics.laerd.com/statistical-guides/pearson-correlation-coefficient-statistical-guide.php
+
+Although I understand the desire to summarize the relationship between two sets of numbers in a single summary statistic, it doesn't work. Yes, it is easy to imagine what a correlation value of 1 or -1 means. But all values in-between are . . . simply there. Take for example, the following code, which will calculate for you the correlation between body_mass_g and flipper_length_mm.
 ```{r}
-## Notice how this function is similar to lm.
-## The data parameter is last.
-t.test(body_mass_g ~ sex, penguins)
+cor.test(x = penguins$body_mass_g, y = penguins$flipper_length_mm)
 ```
 
-But, can you explain to me what the t-test is really doing?
+Although not 1, it is still quite high. But what does that mean? How could we use it? Although the statistical concept of correlation is extremely important and I think we have proven beyond a feather of a doubt the correlation between penguin body mass and flipper length, I do not believe this summary statistic has much practical value. This is especially true compared to the rich insight created by a scatter plot or the wealth of details provided by the coefficients of a linear model.
 
-# Task 10
-
-Question: So, since most people cannot. Let's do a bootstrap. 
-Answer: 
-
-Helpful Hints:
-
-- Traditional hypothesis testing procedures require equations to estimate sampling distributions using the properties of the sample data, the experimental design, and a test statistic. To obtain valid results, you'll need to use the proper test statistic and satisfy the assumptions.
-- That's all kinda hard.
-- We can use a bootstrap as a generic tool to do the same kinds of comparisons!
-- So, what is a bootstrap? A bootstrap is a sample of our sample, sampled many times(with the same size, of course.)
-
-To do this, we will introduce something called a loop!
-
-```{r}
-times <- 10
-for (i in 1:times) {
-    print(i)
-}
-```
-
-We can use this to create a bootstrap sample of median weights. Run the code below. It will take a couple of seconds to run.
-
-```{r}
-times <- 1000
-bs_samples <- tibble()
-for (i in 1:times) {
-    this_sample <- penguins %>% sample_n(size = nrow(penguins), replace = TRUE)
-    bs_samples <- bind_rows(
-        bs_samples,
-        this_sample %>%
-            group_by(sex) %>%
-            summarize(avg_mass = mean(body_mass_g, na.rm = TRUE)) %>%
-            pivot_wider(names_from = sex, values_from = avg_mass)
-    )
-}
-```
-
-
-Now let's look at what we have got.
-
-```{r}
-bs_samples
-```
-
-And we can plot what we have too:
-
-```{r}
-ggplot(bs_samples) +
-    geom_density(aes(x = female), color = "deeppink") +
-    geom_density(aes(x = male), color = "blue") +
-    labs(title = "Male v Female Penguin Body Mass", x = "Body Mass (g)")
-```
-
-- The body mass of penguins is dependent on gender.
-- But we can do a little bit more.
-
-```{r}
-avg_female <- mean(bs_samples$female)
-sd_female <- sd(bs_samples$female)
-low_female <- avg_female - 2 * sd_female
-high_female <- avg_female + 2 * sd_female
-
-avg_male <- mean(bs_samples$male)
-sd_male <- sd(bs_samples$male)
-low_male <- avg_male - 2 * sd_male
-high_male <- avg_male + 2 * sd_male
-
-ggplot(bs_samples) +
-    geom_density(aes(x = female), color = "deeppink") +
-    geom_vline(aes(xintercept = low_female), color = "deeppink") +
-    geom_vline(aes(xintercept = high_female), color = "deeppink") +
-    geom_density(aes(x = male), color = "blue") +
-    geom_vline(aes(xintercept = low_male), color = "blue") +
-    geom_vline(aes(xintercept = high_male), color = "blue") +
-    labs(title = "Male v Female Penguin Body Mass", x = "Body Mass (g)")
-```
-
-So this tells us the same basic thing. It tells us that the 95% interval of these two distributions do not overlap. Which is, basically, the same thing the t-test told us.
-
-But, and this is important. We can use the bootstrap to estimate and parameter. For example a coefficient in a regression model.
-
-In Canvas, check off "Yes" that you've run this code and reviewed it.
-
-The bootstrap is one of those things I get really excited about.
+In Canvas, tell me the correlation summary statistic calculated by the above function.

@@ -1,5 +1,5 @@
 ---
-title: "About Last Week's Lab . . . "
+title: "Linear Regression"
 output: 
   html_notebook:
     toc: true
@@ -10,218 +10,224 @@ output:
     theme: cerule
 ---
 
+# Linear Regression
+
+- This is where we predict the value of a continuous variable based on other values in our data.
+- Last week we observed a correlation between age and charges in our insurance data.
+
+
 
 # Setup
 
 ```{r setup, include=FALSE}
-options(scipen = 999)
+library(rio)
 library(tidyverse)
-diamonds <- read_csv("data/diamonds.csv")
+library(modelr)
+options(scipen = 999)
+
+insurance <- import("data/insurance.csv")
 ```
+
+
 
 # Data
 
+A data frame with 1,338 rows and 7 variables which we will use to model health insurance cost next week. This week we will explore the data to better understand it.
 ```{r}
-diamonds
+insurance
 ```
 
 ## Columns
 
-A data frame with 53940 rows and 10 variables:
+- age: age of primary beneficiary
+- sex: insurance contractor gender, female, male
+- bmi: Body mass index, providing an understanding of body, weights that are relatively high or low relative to height,
+objective index of body weight (kg / m ^ 2) using the ratio of height to weight, ideally 18.5 to 24.9
+- children: Number of children covered by health insurance / Number of dependents
+- smoker: Smoking
+- region: the beneficiary's residential area in the US, northeast, southeast, southwest, northwest.
+- charges: Individual medical costs billed by health insurance
 
-- carat: weight of the diamond (0.2–5.01)
-- cut: quality of the cut (Fair, Good, Very Good, Premium, Ideal)
-- color: diamond colour, from D (best) to J (worst)
-- clarity: a measurement of how clear the diamond is (I1 (worst), SI2, SI1, VS2, VS1, VVS2, VVS1, IF (best))
-- depth: total depth percentage = z / mean(x, y) = 2 * z / (x + y) (43–79)
-- table: width of top of diamond relative to widest point (43–95)
-- price: price in US dollars (\$326–\$18,823)
-- x: length in mm (0–10.74)
-- y: width in mm (0–58.9)
-- z: depth in mm (0–31.8)
+Data Source: https://www.kaggle.com/datasets/mirichoi0218/insurance
 
 
-# Revisiting Model 1
 
-- Below is our first model from last week.
-- Let's discuss what each part of this means.
+# Last Week's Lab
+
+I hope you remember these plots from last week:
 
 ```{r}
-# This is fancy-speak for price as a function of carat.
-model_1 <- lm(price ~ carat, data = diamonds)
-## Note: This is NOT summarize!
-summary(model_1)
+ggplot(insurance, aes(x = charges)) +
+    geom_density() +
+    theme_minimal()
 ```
 
-One thing we didn't do is graph our model. And, well, we should have.
+- The distribution of charges has a strong positive skew because of the long tail of the values.
+- We can see that there is a positive relationship between age and charges.
+  - On average, older members have higher charges.
 
 ```{r}
-ggplot(diamonds, aes(x = carat, y = price)) +
+ggplot(insurance, aes(x = age, y = charges)) +
     geom_point() +
-    geom_smooth(method = "lm")
+    geom_smooth(method = "lm") +
+    theme_minimal()
 ```
 
-- Here you can easily see how the coefficient for carat (7756.43) makes sense.
-- And you can see where/how our Intercept dips below 0.
-- And this was our challenge last week.
 
-And, last week, we assigned the predicted and residual values to our original data. So, let's do that again:
 
-```{r}
-diamonds <-
-    diamonds %>%
-    mutate(
-        predicted_1 = model_1$fitted.values,
-        residuals_1 = model_1$residuals,
-        too_low = if_else(predicted_1 < 0, TRUE, FALSE)
-    )
-diamonds
+# Simple Age Model
+
+- Let's build a linear model of this relationship.
+- Formula: charges ~ bmi
+- This is a Base R function which makes it hard to pipe data into the function.
+
+```{r }
+age_model <- lm(charges ~ age, data = insurance)
+summary(age_model)
 ```
 
-So, where are our "too low" predictions?
+Coefficients:
+
+- Intercept: The estimated value of y when x is zero.
+  - Example: When age is 0, this model predicts the cost will be $3,165.90.
+  - Remember: Our data only contains members ages 18-64. Therefore we should only use this model for that age range. But there is still a y-intercept value.
+- age: For every unit increase in x, how much does y increase/decrease?
+  - In this case, cost increases $257.70 for every year the member ages.
+- Adjusted R-squared: How much of the variance in our data is explained by the model? Will have a value between 0 and 1, higher is better.
+  - This isn't particularly good.
+- p-value: Is the model statisticall significant. <= .05
+  - We will discuss this concept more, but this will do for right now.
+- This object, `age_model`, has a series of things we need to discuss:
 
 ```{r}
-ggplot(diamonds, aes(x = carat, y = price, color = too_low)) +
-    geom_point(alpha = .1) +
-    geom_smooth(method = "lm", color = "blue") +
-    scale_color_brewer(palette = "Dark2")
+# Column names of our data!
+names(insurance)
+
+# Things in our model!
+names(age_model)
 ```
 
-- Our model is most obviously wrong for the cheapest diamonds.
-- If our goal is to predict the price of a diamond, this could be a problem.
-    - Cuz how many people do you know buying 20k ice?
+- fitted.values: Values predicted by our model.
+- residuals: Difference between the actual value and our predicted value.
 
-# Lab Challenge
-
-I challenged you to make increase the r-squared value and reduce the number of below 0 prediction. This was, perhaps, not entirely fair.
-
-- Perhaps we can find a pattern.
-- Look at our plot above.
-    - Do you see any patterns?
-
-What if we did a regression for all diamonds under 1 carat?
+The code chunk below proves that these are the same.
 
 ```{r}
-ggplot(diamonds %>% filter(carat < 1), aes(x = carat, y = price, color = too_low)) +
-    geom_point(alpha = .1) +
-    geom_smooth(method = "lm", color = "blue") +
-    scale_color_brewer(palette = "Dark2")
-model_small <- lm(price ~ carat, diamonds %>% filter(carat < 1))
-summary(model_small)
+# Adds our predicted values as a new column.
+insurance <-
+    insurance |>
+    add_predictions(age_model)
+
+# The thick blue line is what we did before with ggplot.
+# The green line is the model created by lm above.
+ggplot(insurance, aes(x = age, y = charges)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE, size = 5) +
+    geom_line(aes(y = pred), color = "green", size = 2)
+theme_minimal()
 ```
 
-- This is better.
-- Our intercept went from -2256 to -995.
-- But, ever here, we see a strong pattern.
+- **Question:** Why is this age_model more useful than the ggplot line?
+- **Answer:** We can do more with it!
+
+We can use our model object to evaluate the model and to make new predictions!
 
 ```{r}
-ggplot(diamonds %>% filter(carat >= 1), aes(x = carat, y = price, color = too_low)) +
-    geom_point(alpha = .1) +
-    geom_smooth(method = "lm", color = "blue") +
-    scale_color_brewer(palette = "Dark2")
-model_big <- lm(price ~ carat, diamonds %>% filter(carat >= 1))
-summary(model_big)
+new_members <- tibble(
+    age = c(10, 20, 25, 30, 35, 40, 100)
+)
+new_members |>
+    add_predictions(age_model)
 ```
 
-Perhaps we can create a new variable to help the model see this banding.
+BE VERY CAREFUL PREDICTING WITH VALUES BEYOND YOUR TRAINING DATA!!!!!
 
-- And remember, this is done by eye-ball.
-
+And we can evaluate out model:
 ```{r}
+insurance <-
+    insurance |>
+    mutate(residuals = charges - pred)
 
-diamonds <-
-    diamonds %>%
-    mutate(carat_group = case_when(
-        carat < 0.3 ~ "< 0.3",
-        carat >= 0.3 & carat < 0.5 ~ "0.3 - 0.4",
-        carat >= 0.5 & carat < 0.7 ~ "0.5 - 0.7",
-        carat >= 0.7 & carat < 0.9 ~ "0.7 - 0.8",
-        carat >= 0.9 & carat < 1.0 ~ "0.9 - 0.99",
-        carat >= 1.0 & carat < 1.5 ~ "1.0 - 1.4",
-        carat >= 1.5 & carat < 2.0 ~ "1.5 - 1.99",
-        carat >= 2.0 & carat < 3.0 ~ "2.0 - 2.99",
-        carat >= 3.0 ~ "> 3"
-    ))
-ggplot(diamonds, aes(x = carat, y = price, color = too_low)) +
-    geom_point(alpha = .1) +
-    geom_smooth(method = "lm", color = "blue") +
-    scale_color_brewer(palette = "Dark2") +
-    facet_wrap(~carat_group)
-model_complicated <- lm(price ~ carat + carat_group, diamonds)
-summary(model_complicated)
-```
-
-So, how did we do?
-
-```{r}
-diamonds <-
-    diamonds %>%
-    mutate(
-        predicted_complicated = model_complicated$fitted.values,
-        residuals_complicated = model_complicated$residuals,
-        too_low = if_else(predicted_complicated < 0, TRUE, FALSE)
-    )
-diamonds %>% filter(too_low)
-```
-
-- This is what #winning looks like.
-
-```{r}
-ggplot(diamonds, aes(x = predicted_1)) +
-    geom_density() +
-    labs(title = "Model 1: Distribution of Predicted Values")
-
-ggplot(diamonds, aes(x = predicted_complicated)) +
-    geom_density() +
-    labs(title = "Model Complicated: Distribution of Predicted Values")
-```
-
-PLEASE notice the difference!
-
-```{r}
-diamonds %>%
+print("For age_smoker_model")
+insurance |>
     summarize(
-        model_1_mean_residuals = mean(residuals_1),
-        model_1_sd_residuals = sd(residuals_1),
-        model_c_mean_residuals = mean(residuals_complicated),
-        model_c_sd_residuals = sd(residuals_complicated),
+        avg_residual = mean(residuals),
+        sd_residuals = sd(residuals)
     )
-ggplot(diamonds, aes(x = residuals_1)) +
-    geom_density() +
-    labs(title = "Model 1: Distribution of Predicted Values")
 
-ggplot(diamonds, aes(x = residuals_complicated)) +
-    geom_density() +
-    labs(title = "Model Complicated: Distribution of Predicted Values")
+ggplot(insurance, aes(residuals)) +
+    geom_density()
 ```
 
-As you can see, our residuals are closer to zero, but more importantly, the standard deciation is down by over $100.
+- Remember how our model only explains 8-9 percent of the variance in the data?
+- This is why. Our residuals should be normally distributed.
+- This model isn't very good.
+
+
+
+# Age + Smoker Model
+
+- Remember this observation?
+- Non-smokers cost less, regardless of age.
 
 ```{r}
-ggplot(diamonds, aes(x = price, y = predicted_1)) +
+# Removes the predicted/residual values from our last model.
+insurnace <- insurance |> select(-pred, -residuals)
+
+ggplot(insurance, aes(x = age, y = charges, color = smoker)) +
     geom_point() +
-    labs(title = "Model 1: Price Compared to Predicted Price")
-ggplot(diamonds, aes(x = price, y = predicted_complicated)) +
-    geom_point() +
-    labs(title = "Model Complicated: Price Compared to Predicted Price")
+    geom_smooth(method = "lm", se = FALSE) +
+    theme_minimal()
 ```
 
-- This (hopefully) teaches us something important about modeling data.
-    - model_1 has an adjusted r-squared of ~.85. 
-    - model_complicated is only .87.
-    - So, yes, better, but not wildly so.
-    - Yet, model_complicated is a better, more practical model.
-        - It isn't actually all that complicated.
-        - It produces no results which are OBVIOUSLY stupid.
-            - (At this level of obvious.)
-    - We also have a saner looking estimate for the slope for carat.
+Perhaps we can use lm to build a model like this!
 
 ```{r}
-model_more_complicated <- lm(price ~ carat * carat_group, diamonds)
-summary(model_complicated)
-summary(model_more_complicated)
+age_smoker_model <- lm(charges ~ age + smoker, data = insurance)
+summary(age_smoker_model)
 ```
 
-- There are plenty of advanced techniques to understand a model.
-- And those are important but . . . 
-- When common sense is excluded from model assessment, stupid things happen.
+- Right off the bat, we've done something AWESOME.
+- Adjusted R-squared when from 0.08 to .72. That is a 9x improvement.
+- But what did we do???
+
+We have a some more complexity to our model.
+
+```{r}
+tibble(
+    age = c(0, 0, 45, 45),
+    smoker = c("no", "yes", "no", "yes")
+) |>
+    add_predictions(age_smoker_model)
+```
+
+We now have two intercepts and thus two lines.
+
+- Intercept for non-smokers is -2391.63
+- Intercept for smokers is 23855.30 + -2391 which is 21463.67!
+- In this instance, the slope is the same. For every year older, +274.87
+
+```{r}
+insurance <-
+    insurance |>
+    add_predictions(age_smoker_model)
+
+insurance <-
+    insurance |>
+    mutate(residuals = charges - pred)
+
+print("For age_smoker_model")
+insurance |>
+    summarize(
+        avg_residual = mean(residuals),
+        sd_residuals = sd(residuals)
+    )
+
+ggplot(insurance, aes(residuals)) +
+    geom_density()
+```
+
+- And now you can see that this is MUCH better model.
+- Our residuals are much closer to 0.
+- And we have a reasonable number of values on either side of 0.
+- This isn't a great model. But it is . . . say 9x better than it was!
