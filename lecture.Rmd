@@ -148,7 +148,7 @@ insurance <-
     insurance |>
     mutate(residuals = charges - pred)
 
-print("For age_smoker_model")
+print("For age_model")
 insurance |>
     summarize(
         avg_residual = mean(residuals),
