@@ -1,0 +1,238 @@
+---
+title: "Midterm Review Lab"
+format: html
+---
+
+
+
+# Setup
+
+```{r}
+#| label: setup
+#| include: false
+
+library(rio)
+library(tidyverse)
+options(scipen = 999)
+
+penguins <- import("data/penguins.csv")
+```
+
+
+
+# Penguin Questions
+
+## Data
+
+**Description:** Size measurements for adult foraging penguins near Palmer
+Station, Antarctica. Includes measurements for penguin species, island in Palmer
+Archipelago, size (flipper length, body mass, bill dimensions), and sex.
+
+**Format:** 
+
+- A tibble with 344 rows and 8 variables:
+- **species:** a factor denoting penguin species (Adélie, Chinstrap and Gentoo)
+- **island:** a factor denoting island in Palmer Archipelago, Antarctica (Biscoe, Dream or Torgersen)
+- **bill_length_mm:** a number denoting bill length (millimeters)
+- **bill_depth_mm:** a number denoting bill depth (millimeters)
+- **flipper_length_mm:** an integer denoting flipper length (millimeters)
+- **body_mass_g:** an integer denoting body mass (grams)
+- **sex:** a factor denoting penguin sex (female, male)
+- **year:** an integer denoting the study year (2007, 2008, or 2009)
+
+## Task 01
+
+- Question: Which species of penguin has the largest average body mass? and what is it?
+- Answer: Gentoo
+
+- Question: What is the average body mass for this species of penguin?
+- Answer: 5076
+
+- Question: What is the unit of measurement for body mass in this data set?
+- Answer: Grams as noted in the data documentation above.
+
+Helpful Hint: Don't accept NA as an answer. Use `?mean` if you don't remember to handle missing values.
+
+```{r}
+penguins |>
+  group_by(species) |>
+  summarize(avg_body_mass = mean(body_mass_g, na.rm = TRUE))
+```
+
+## Task 02
+
+Draw a density plot of flipper length and a separate density plot of body mass.
+
+- Question: How would you describe the distribution of flipper length compared to body mass? Upload your plots to Canvas to support your answer.
+- Answer: 
+
+Flipper length is clearly bi-modal and has positively skewed. Body mass is possibly tri-modal, although less obviously so and is more positively skewed.
+
+The most important part is for them to talk about bi/tri modality and hopefully mention that at least one is skewed.
+
+Helpful Hints: 
+
+- Is the data normally distributed, positively skewed, or negatively skewed?
+- Is the data bi-modal (two humps in the density plot) or multi-modal (more than 2 humps)?
+
+```{r}
+penguins |> ggplot(aes(x = flipper_length_mm)) + geom_density()
+penguins |> ggplot(aes(x = body_mass_g)) + geom_density()
+```
+
+## Task 03
+
+- Question: In which year did they study the most penguins?
+- Answer: 2009
+
+Helpful Hint:
+- Use dplyr verbs so you get an exact answer.
+
+```{r}
+penguins |> count(year)
+```
+
+## Task 04
+
+- Question: In which year were the Adelie penguins the heaviest, on average?
+- Answer: 2008
+
+```{r}
+penguins |>
+  filter(species == "Adelie") |>
+  group_by(year)  |>
+  summarize(avg_body_mass = mean(body_mass_g, na.rm = TRUE))
+```
+
+## Task 05
+
+Draw a bar plot showing the number of penguins studied every year by species.
+
+- Question: Which penguin species was most frequently studied in 2007?
+- Answer: Adelie
+
+Helpful Hint:
+
+- You can solve this geom_bar() OR geom_col().
+- If your plots look stacked, try `position = "dodge"`. It makes life easier.
+- Or you can use facet_wrap(). Your call really.
+- You can confirm your results with dplyr verbs.
+
+```{r}
+penguins |>
+  filter(year == 2007) |>
+  ggplot(aes(x = species)) +
+  geom_bar()
+```
+
+
+## Task 06
+
+Draw a plot showing the relationship between body mass (x) and flipper length (y). Extra credit (5) if you can add the regression line to your plot.
+
+- Question:  How would you describe this relationship? Upload your plot to Canvas to support your answer.
+- Answer: 
+
+The relationship is positive. Give them some extra credit if they mention Loess Curve or local regression. https://en.wikipedia.org/wiki/Local_regression Heck, give them some extra credit if they upload a loess plot, even if they don't really understand it, just for trying/exploring.
+
+Helpful Hint:
+
+- Use geom_point for the scatter plot.
+- Use geom_smooth for the regression line.
+  - Be sure to tell R you want a linear regression.
+  - `geom_smooth(method = lm)`
+  - But try it with/without `method = lm`.
+  - What do you think it is doing if you don't specify a linear regression?
+
+```{r}
+# Linear Regression
+ggplot(penguins, aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point() +
+  geom_smooth(method = lm)
+
+# Loess Regression
+ggplot(penguins, aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point() +
+  geom_smooth()
+```
+
+
+
+# Class Survey
+
+Remember that survey I asked you to complete the first week of class? Well, it's back!
+
+```{r}
+survey <- import("data/class_survey.csv")
+```
+
+The grain of this data is student/survey response. Each row is a unique survey response and since none of you could take it more than once, each row is also a unique person.
+
+Let's take a quick look at the data.
+
+```{r}
+survey
+```
+
+## Task 07
+
+- Questions: How many students threatened to drop this class because I asked them if they like math?
+- Answer: 2
+
+Helpful Hint: Use the column, like_math.
+
+```{r}
+survey |> count(like_math)
+```
+
+## Taslk 08
+
+- Question: Based on these survey responses, can you (easily) use the skills we have learned in this class to determine how many of your classmates have used data to make a decision?
+- Answer: No
+
+You would have to read each answer and put the student's answer into a countable format.
+
+Helpful Hints: 
+- Use the column, used_data_to_make_decision
+- Valid answers are No, and Yes
+
+```{r}
+survey |>
+  count(used_data_to_make_decision)
+```
+
+## Task 09
+
+- Question: How is the data in the used_data_to_make_a_decision column different than the other columns of data we have used?
+- Answer: It is raw data entry and is not from a drop-down or controlled choice. Therefore it is highly complex and not easily counted with out having someone categorize the data for us or use an AI to do it for us.
+
+Helpful Hint: You do not need to write any code to answer this question. See Task 08.
+
+
+## Task 10
+
+- Question: What percentage of students in this class are Public Health majors?
+- Answer: 44.44 although I'll accept 44, 44.4, 44.44 . . . I'm not going to stress the details here.
+
+Helpful Hint: Use the column degree_program
+
+```{r}
+survey |>
+  count(degree_program) |>
+  mutate(p = 100*n/sum(n))
+```
+
+
+## Task 11
+
+- Question: Of those students who claim to be good at counting, what percentage have previously analyzed data?
+- Answer: 50% I will also accept 50.0%, etc.
+
+Helpful Hint: Use the columns good_at_counting and ever_analyzed_data to answer this question.
+
+```{r}
+survey |>
+  filter(good_at_counting == "Yes") |>
+  count(ever_analyzed_data) |>
+  mutate(p = 100*n/sum(n))
+```

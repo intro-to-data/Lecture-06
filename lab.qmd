@@ -1,0 +1,210 @@
+---
+title: "Midterm Review Lab"
+format: html
+---
+
+
+
+# Setup
+
+```{r}
+#| label: setup
+#| include: false
+
+library(rio)
+library(tidyverse)
+options(scipen = 999)
+
+penguins <- import("data/penguins.csv")
+survey <- import("data/class_survey.csv")
+```
+
+
+
+# Penguin Questions
+
+## Data
+
+**Description:** Size measurements for adult foraging penguins near Palmer
+Station, Antarctica. Includes measurements for penguin species, island in Palmer
+Archipelago, size (flipper length, body mass, bill dimensions), and sex.
+
+**Format:** 
+
+- A tibble with 344 rows and 8 variables:
+- **species:** a factor denoting penguin species (Adélie, Chinstrap and Gentoo)
+- **island:** a factor denoting island in Palmer Archipelago, Antarctica (Biscoe, Dream or Torgersen)
+- **bill_length_mm:** a number denoting bill length (millimeters)
+- **bill_depth_mm:** a number denoting bill depth (millimeters)
+- **flipper_length_mm:** an integer denoting flipper length (millimeters)
+- **body_mass_g:** an integer denoting body mass (grams)
+- **sex:** a factor denoting penguin sex (female, male)
+- **year:** an integer denoting the study year (2007, 2008, or 2009)
+
+The grain of this data is one row per bird studied. Note that this study took place over three consecutive years.
+
+## Task 01
+
+- Question: Which species of penguin has the largest average body mass? and what is it?
+- Answer: 
+
+- Question: What is the average body mass for this species of penguin?
+- Answer: 
+
+- Question: What is the unit of measurement for body mass in this data set?
+- Answer: 
+
+Helpful Hint: Don't accept NA as an answer. Use `?mean` if you don't remember to handle missing values.
+
+```{r}
+## YOUR CODE HERE!
+```
+
+## Task 02
+
+Draw a density plot of flipper length and a separate density plot of body mass.
+
+- Question: How would you describe the distribution of flipper length compared to body mass? Upload your plots to Canvas to support your answer.
+- Answer: 
+
+Helpful Hints: 
+
+- Is the data normally distributed, positively skewed, or negatively skewed?
+- Is the data bi-modal (two humps in the density plot) or multi-modal (more than 2 humps)?
+
+```{r}
+## YOUR CODE HERE!
+```
+
+## Task 03
+
+- Question: In which year did they study the most penguins?
+- Answer:
+
+Helpful Hint:
+- Use dplyr verbs so you get an exact answer.
+
+```{r}
+## YOUR CODE HERE!
+```
+
+## Task 04
+
+- Question: In which year were the Adelie penguins the heaviest, on average?
+- Answer: 
+
+```{r}
+## YOUR CODE HERE!
+```
+
+## Task 05
+
+Draw a bar plot showing the number of penguins studied every year by species.
+
+- Question: Which penguin species was most frequently studied in 2007?
+- Answer:
+
+Helpful Hint:
+
+- You can solve this geom_bar() OR geom_col().
+- If your plots look stacked, try `position = "dodge"`. It makes life easier.
+- Or you can use facet_wrap(). Your call really.
+- You can confirm your results with dplyr verbs.
+
+```{r}
+## YOUR CODE HERE!
+```
+
+
+## Task 06
+
+Draw a plot showing the relationship between body mass (x) and flipper length (y). Extra credit (5) if you can add the regression line to your plot.
+
+- Question:  How would you describe this relationship? Upload your plot to Canvas to support your answer.
+- Answer: 
+
+Helpful Hint:
+
+- Use geom_point for the scatter plot.
+- Use geom_smooth for the regression line.
+  - Be sure to tell R you want a linear regression.
+  - `geom_smooth(method = "lm")`
+  - But try it with/without `method = "lm"`.
+  - What do you think it is doing if you don't specify a linear regression?
+
+```{r}
+## YOUR CODE HERE!
+```
+
+
+
+# Class Survey
+
+Remember that survey I asked you to complete the first week of class? Well, it's back!
+
+```{r}
+survey <- import("data/class_survey.csv")
+```
+
+The grain of this data is student/survey response. Each row is a unique survey response and since none of you could take it more than once, each row is also a unique person.
+
+Let's take a quick look at the data.
+
+```{r}
+survey
+```
+
+## Task 07
+
+- Questions: How many students threatened to drop this class because I asked them if they like math?
+- Answer:
+
+Helpful Hint: Use the column, like_math.
+
+```{r}
+## YOUR CODE HERE!
+```
+
+## Task 08
+
+- Question: Based on these survey responses, can you (easily) use the skills we have learned in this class to determine how many of your classmates have used data to make a decision?
+- Answer: 
+
+Helpful Hints: 
+- Use the column, used_data_to_make_decision
+- Valid answers are No, and Yes
+
+```{r}
+## YOUR CODE HERE!
+```
+
+## Task 09
+
+- Question: How is the data in the used_data_to_make_a_decision column different than the other columns of data we have used?
+- Answer:
+
+Helpful Hint: You do not need to write any code to answer this question. See Task 08.
+
+
+## Task 10
+
+- Question: What percentage of students in this class are Public Health majors?
+- Answer: 
+
+Helpful Hint: Use the column degree_program
+
+```{r}
+## YOUR CODE HERE!
+```
+
+
+## Task 11
+
+- Question: Of those students who claim to be good at counting, what percentage have previously analyzed data?
+- Answer:
+
+Helpful Hint: Use the columns good_at_math and ever_analyzed_data to answer this question.
+
+```{r}
+## YOUR CODE HERE!
+```

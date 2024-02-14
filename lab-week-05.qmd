@@ -1,0 +1,222 @@
+---
+title: "How much for that insurance?"
+format: html
+---
+
+# Setup
+
+- Import the "insurance.csv" file in the "data" folder.
+
+```{r setup}
+#| include: false
+
+pacman::p_load(rio, tidyr, tidyverse)
+insurance <- read_csv("data/insurance.csv")
+```
+
+# Data
+
+```{r}
+insurance
+```
+
+## Columns
+
+- age: age of primary beneficiary
+- sex: insurance contractor gender, female, male
+- bmi: Body mass index, providing an understanding of body, weights that are relatively high or low relative to height,
+objective index of body weight (kg / m ^ 2) using the ratio of height to weight, ideally 18.5 to 24.9
+- children: Number of children covered by health insurance / Number of dependents
+- smoker: Smoking
+- region: the beneficiary's residential area in the US, northeast, southeast, southwest, northwest.
+- charges: Individual medical costs billed by health insurance
+
+Data Source: [https://www.kaggle.com/datasets/mirichoi0218/insurance](https://www.kaggle.com/datasets/mirichoi0218/insurance)
+
+
+# Task 01
+
+- **Question:** Which columns are categorical variables? Which columns are continuous variables?
+- **Answer:**
+
+Hint: This questions does not require any code. None. Nada. Just make some notes below.
+
+Categorical Variables:
+
+- sex
+- smoker
+- region
+- children
+
+Continuous Variables:
+
+- age
+- bmi
+- charges
+- children
+
+
+
+# Task 02
+
+Each row of data in this data set contains patient information for a single, unknown, year. Therefore, the `charges` column is not a single charge. It is the total member charges for the year.
+
+I suspect this does not include member co-pay because the term charges is used by insurance companies to identify their out of pocket costs for the member.
+
+- **Question:** What is the smallest, or minimum, member charge in this data set?
+- **Answer:**
+
+```{r}
+insurance |> arrange(charges)
+
+insurance |> summarize(min_charge = min(charges))
+```
+
+Summarize Functions:
+
+- mean
+- max
+- min
+- sd
+
+
+
+# Task 03
+
+- **Question:** Draw a density plot of charges. How would you describe the distribution of charges?
+    - Positively Skewed
+    - Negatively Skewed
+    - Normally Distributed
+- **Answer:**
+
+```{r}
+ggplot(insurance, aes(x = charges)) + geom_density()
+
+```
+
+There are different ways to calculate skewness. We will use the alternative Pearson Mode skewness calculation.
+
+`Skew = 3 * (Mean – Median) / Standard Deviation`
+
+Can you calculate the skew of charges . . .  without just typing the numbers into the R console?
+
+```{r}
+## Hint: You can use columns you've already defined . . . . 
+insurance |>
+    summarize(
+        mean_charges = mean(charges),
+        sd_charges = sd(charges),
+        median_charges = median(charges),
+        ## Tip: You can use previously defined values such as mean_charges!
+        skew_charges = 3 * (mean_charges - median_charges)/sd_charges,
+        simple_example = 3 * (10-10.1)/2
+    )
+```
+
+An easy hack to remember positive/negative skew.
+
+- If the mean is LARGER than the median it is positively skewed because of the long tail to the right.
+- If the mean is SMALLER than the median it is negatively skewed because of the long tail to the left.
+
+Hint: Numeric distributions are generally positively skewed. . . . 
+
+Reusing the code above, draw a density plot of BMI and calculate the skew of BMI. In Canvas, tell me which variable, BMI or Charges is MORE skewed. Use your plots and skew calculations to support your answer.
+
+```{r}
+ggplot(insurance, aes(x = bmi)) + geom_density()
+
+insurance |>
+    summarize(
+        mean_charges = mean(bmi),
+        sd_charges = sd(bmi),
+        median_charges = median(bmi),
+        ## Tip: You can use previously defined values such as mean_charges!
+        skew_charges = 3 * (mean_charges - median_charges)/sd_charges
+    )
+```
+
+# Task 04
+
+- **Question:** Look at the age variable. What kinds of members are not in this data set? When we later develop a model to predict cost, what limits will this place on our model?
+- **Answer:**
+  - Cannot say anything about children.
+  - Cannot say anything about retirees.
+
+To do this, look at the distribution plot of age. I also recommend you look at the min, max, and average age of members.
+
+```{r}
+ggplot(insurance, aes(x = age)) + geom_histogram()
+
+insurance |> summarize(avg_age = mean(age), max_age = max(age), min_age = min(age))
+
+```
+
+# Task 05
+
+- **Question:** It is possible to calculate a percentage using the dplyr verbs. Use the code below to calculate the percentage of members which are female.
+- **Answer:**
+
+```{r}
+## First we count the number of members who are male/female.
+## Then we un-group the data, and calculate the percent using mutate.
+insurance |>
+    group_by(sex) |>
+    count() |>
+    ungroup() |>
+    mutate(p = 100 * n / sum(n))
+
+## Another approach, using pivot.
+insurance |>
+    group_by(sex) |>
+    count() |>
+    pivot_wider(names_from = sex, values_from = n) |>
+    mutate(p_female = 100 * female / (female + male))
+
+## If all goes well, you will get the same answer . . . . 
+```
+
+# Task 06
+
+- **Question:** Which region has the highest average charges? Which region has the highest average BMI?
+- **Answer:**
+
+```{r}
+insurance |>
+  group_by(region) |>
+  summarize(avg_charges = mean(charges)) |>
+  arrange(avg_charges)
+```
+
+# Task 07
+
+- **Question:** Draw a scatter plot showing charges as a function of BMI.
+- **Answer:**
+
+This means you plot charges as the dependent variable (y-axis) and BMI as the independent variable (x-axis).
+
+```{r}
+ggplot(insurance, aes(x = bmi, y = charges)) + geom_point()
+
+```
+
+
+
+# Task 08
+
+- **Question:** It is complicated, but there is a correlation between BMI and insurance charges. In fact, there appear to be at least two groups in this plot. Which categorical variable best explains the apparent existence of these groups?
+- **Answer:** Your answer should be sex, smoker, or region.
+
+In other words, which categorical variables group together best to tell a story? Take your plot from above, and use the `color` parameter of the `aes()` function. Look at all the categorical variables and choose the plot that tells the most compelling story about our data. Which variable best "explains" our groupings?
+
+```{r}
+ggplot(insurance, aes(x = bmi, y = charges, color = smoker)) + geom_point()
+```
+
+# Task 09
+
+- **Question:** Create a new scatter plot. This time, plot charges as a function of age. And you should see THREE groups. Which categorical variable best explains these three groups?
+- **Answer:** Your answer should be sex, smoker, or region.
+
+```{r}
+ggplot(insurance, aes(x = age, y = charges, color = smoker)) + geom_point()
+```
