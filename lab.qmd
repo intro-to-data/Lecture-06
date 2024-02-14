@@ -16,7 +16,6 @@ library(tidyverse)
 options(scipen = 999)
 
 penguins <- import("data/penguins.csv")
-survey <- import("data/class_survey.csv")
 ```
 
 
