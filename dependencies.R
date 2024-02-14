@@ -1,7 +1,7 @@
 ## Simple script used to install all packages needed by the lecture/lab.
 
 p <- c(
-  "httpgd"
+  "httpgd",
   "knitr",
   "markdown",
   "modelr",
