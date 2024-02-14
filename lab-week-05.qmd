@@ -7,7 +7,8 @@ format: html
 
 - Import the "insurance.csv" file in the "data" folder.
 
-```{r setup}
+```{r}
+#| label: setup
 #| include: false
 
 pacman::p_load(rio, tidyr, tidyverse)
