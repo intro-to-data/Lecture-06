@@ -13,6 +13,8 @@ format: html
 
 library(rio)
 library(tidyverse)
+
+## This suppresses the scientific notation.
 options(scipen = 999)
 
 penguins <- import("data/penguins.csv")
@@ -21,6 +23,7 @@ penguins <- import("data/penguins.csv")
 
 
 # Penguin Questions
+
 
 ## Data
 
@@ -42,9 +45,10 @@ Archipelago, size (flipper length, body mass, bill dimensions), and sex.
 
 The grain of this data is one row per bird studied. Note that this study took place over three consecutive years.
 
+
 ## Task 01
 
-- Question: Which species of penguin has the largest average body mass? and what is it?
+- Question: Which species of penguin has the largest average body mass?
 - Answer: 
 
 - Question: What is the average body mass for this species of penguin?
@@ -53,11 +57,13 @@ The grain of this data is one row per bird studied. Note that this study took pl
 - Question: What is the unit of measurement for body mass in this data set?
 - Answer: 
 
-Helpful Hint: Don't accept NA as an answer. Use `?mean` if you don't remember to handle missing values.
+Helpful Hint: Don't accept NA as an answer. Use `?mean` if you don't remember
+how to handle missing values.
 
 ```{r}
 ## YOUR CODE HERE!
 ```
+
 
 ## Task 02
 
@@ -75,6 +81,7 @@ Helpful Hints:
 ## YOUR CODE HERE!
 ```
 
+
 ## Task 03
 
 - Question: In which year did they study the most penguins?
@@ -87,6 +94,7 @@ Helpful Hint:
 ## YOUR CODE HERE!
 ```
 
+
 ## Task 04
 
 - Question: In which year were the Adelie penguins the heaviest, on average?
@@ -96,11 +104,12 @@ Helpful Hint:
 ## YOUR CODE HERE!
 ```
 
+
 ## Task 05
 
 Draw a bar plot showing the number of penguins studied every year by species.
 
-- Question: Which penguin species was most frequently studied in 2007?
+- Question: Using your barplot, tell me which penguin species was most frequently studied in 2007?
 - Answer:
 
 Helpful Hint:
@@ -139,47 +148,61 @@ Helpful Hint:
 
 # Class Survey
 
-Remember that survey I asked you to complete the first week of class? Well, it's back!
+Remember that survey I asked you to complete the first week of class? Well, it's back! If you look in the `data` folder, there are surveys for 2024 and 2025. Just imagine all the weird and spurious correlations we could find in this data!
 
 ```{r}
-survey <- import("data/class_survey.csv")
+survey <- import("data/class_survey_2025.csv")
 ```
 
-The grain of this data is student/survey response. Each row is a unique survey response and since none of you could take it more than once, each row is also a unique person.
+The grain of this data is student/survey response. Each row is a unique survey response and since none of you could take it more than once, each row is also a unique student.
 
-Let's take a quick look at the data.
+Let's take a quick look at the data:
 
 ```{r}
 survey
 ```
+
+I'm sure you remember the ridiculous questions, but what you don't know is how I mapped those questions to column names. So here's a little cheat-sheet for what column name goes with what question.
+
+```{r}
+import("data/questions.csv")
+```
+
+
+With all of this data, I believe you should have plenty to practive with. If interested, I could put out some similar questions using last year's data.
+
 
 ## Task 07
 
 - Questions: How many students threatened to drop this class because I asked them if they like math?
 - Answer:
 
-Helpful Hint: Use the column, like_math.
+Helpful Hint: Use the column, `like_math`.
 
 ```{r}
 ## YOUR CODE HERE!
 ```
+
+You guys are a cheeky bunch! Only two students threatened to drop the class last year!
+
 
 ## Task 08
 
-- Question: Based on these survey responses, can you (easily) use the skills we have learned in this class to determine how many of your classmates have used data to make a decision?
+- Question: Can you easily use the column `used_data_to_make_decision` to determine how many of your classmates have used data to make a decision?
 - Answer: 
 
 Helpful Hints: 
-- Use the column, used_data_to_make_decision
 - Valid answers are No, and Yes
+- "Easily" means you can use the skills we've practiced in class to count the number of students who have used data to make a decision.
 
 ```{r}
 ## YOUR CODE HERE!
 ```
 
+
 ## Task 09
 
-- Question: How is the data in the used_data_to_make_a_decision column different than the other columns of data we have used?
+- Question: How is the data in the `used_data_to_make_a_decision` column different than the other columns of data we have used?
 - Answer:
 
 Helpful Hint: You do not need to write any code to answer this question. See Task 08.
@@ -189,8 +212,9 @@ Helpful Hint: You do not need to write any code to answer this question. See Tas
 
 - Question: What percentage of students in this class are Public Health majors?
 - Answer: 
-
-Helpful Hint: Use the column degree_program
+- Helpful Hints:
+    - I want a number, not a chart.
+    - Yes, it is your job to figure out which column to use.
 
 ```{r}
 ## YOUR CODE HERE!
@@ -199,10 +223,26 @@ Helpful Hint: Use the column degree_program
 
 ## Task 11
 
+- Question: On average, who is taller? Pre-Med or public health students?
+- Answer:
+    - Must be Pre-Med or Public Health
+
+- Question: Do you think this observation is likely to be meaningful? Why or why not?
+- Answer:
+    - Don't write an essay. Just a few sentences about how/where data could have entered into this?
+
+
+```{r}
+## YOUR CODE HERE!
+```
+
+
+## Task 12
+
 - Question: Of those students who claim to be good at counting, what percentage have previously analyzed data?
 - Answer:
-
-Helpful Hint: Use the columns good_at_math and ever_analyzed_data to answer this question.
+- Helpful Hint: 
+    - Use the columns `good_at_math` and `ever_analyzed_data` to answer this question.
 
 ```{r}
 ## YOUR CODE HERE!
